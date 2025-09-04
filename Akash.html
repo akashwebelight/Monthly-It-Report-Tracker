@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monthly IT Report Tracker — Akash Prajapati</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="dark" />
+  <style>
+    /* Print styles: print only selected month content */
+    @media print {
+      body { background: #fff; }
+      .no-print { display: none !important; }
+      .print-card { box-shadow: none !important; border: 1px solid #e5e7eb; }
+    }
+    /* Simple glass effect */
+    .glass {
+      background: rgba(17, 24, 39, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-950 via-slate-900 to-gray-900 text-gray-100">
+  <!-- Header -->
+  <header class="no-print sticky top-0 z-40 glass">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
+      <div class="shrink-0 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 p-2">
+        <!-- flame ZP logo placeholder -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7 text-white">
+          <path d="M12 2c2.5 3.2 5.5 4.8 5.5 8.7 0 3.3-2.5 5.8-5.5 5.8s-5.5-2.5-5.5-5.8C6.5 6.8 9.5 5.2 12 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-xl md:text-2xl font-semibold leading-tight">Monthly IT Report Tracker</h1>
+        <p class="text-xs md:text-sm text-gray-400">By Akash Prajapati — Senior System Administrator</p>
+      </div>
+      <div class="ml-auto flex gap-2">
+        <button id="btnPrint" class="no-print inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-white/10 hover:bg-white/20 transition shadow">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6 9V2h12v7H6zm12 2h-1V4H7v7H6c-1.66 0-3 1.34-3 3v4h4v4h10v-4h4v-4c0-1.66-1.34-3-3-3zM8 20v-4h8v4H8z"/></svg>
+          <span class="text-sm">Export PDF</span>
+        </button>
+        <button id="btnEditJSON" class="no-print inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-indigo-600 hover:bg-indigo-500 transition shadow">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          <span class="text-sm">Open JSON Editor</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Controls -->
+  <section class="no-print max-w-6xl mx-auto px-4 pt-6">
+    <div class="grid md:grid-cols-3 gap-3">
+      <div class="glass rounded-2xl p-3">
+        <label class="text-xs uppercase tracking-wide text-gray-400">Select Month</label>
+        <select id="monthSelect" class="mt-1 w-full bg-transparent border border-white/10 rounded-xl p-2 outline-none">
+          <option value="__all">All Months</option>
+        </select>
+      </div>
+      <div class="glass rounded-2xl p-3 md:col-span-2">
+        <label class="text-xs uppercase tracking-wide text-gray-400">Search (task, category, impact)</label>
+        <input id="searchInput" placeholder="e.g. Wazuh, Sophos, laptop warranty, cost saved" class="mt-1 w-full bg-transparent border border-white/10 rounded-xl p-2 outline-none" />
+      </div>
+    </div>
+
+    <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="glass rounded-2xl p-4">
+        <p class="text-xs text-gray-400">Total Months</p>
+        <p id="statMonths" class="text-2xl font-semibold">—</p>
+      </div>
+      <div class="glass rounded-2xl p-4">
+        <p class="text-xs text-gray-400">Tasks (Selected)</p>
+        <p id="statTasks" class="text-2xl font-semibold">—</p>
+      </div>
+      <div class="glass rounded-2xl p-4">
+        <p class="text-xs text-gray-400">Unique Categories</p>
+        <p id="statCats" class="text-2xl font-semibold">—</p>
+      </div>
+      <div class="glass rounded-2xl p-4">
+        <p class="text-xs text-gray-400">Cost Saved (₹)</p>
+        <p id="statCost" class="text-2xl font-semibold">—</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reports Container -->
+  <main id="reports" class="max-w-6xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-4"></main>
+
+  <!-- JSON Editor Modal -->
+  <div id="jsonModal" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="absolute inset-0 bg-black/60" data-close></div>
+    <div class="relative max-w-5xl w-[92vw] glass rounded-2xl p-4">
+      <div class="flex items-center gap-2 mb-2">
+        <h3 class="text-lg font-semibold">Edit reports.json</h3>
+        <span class="ml-auto"></span>
+        <button class="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20" data-close>Close</button>
+      </div>
+      <p class="text-sm text-gray-400">Paste or edit your data below. Click <em>Download reports.json</em> to save and commit to GitHub. The site will auto-load this file when present.</p>
+      <textarea id="jsonArea" class="mt-3 w-full h-[50vh] bg-black/40 border border-white/10 rounded-xl p-3 font-mono text-sm"></textarea>
+      <div class="flex gap-2 justify-end mt-3">
+        <button id="btnCopyJSON" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy</button>
+        <button id="btnDownloadJSON" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500">Download reports.json</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="no-print max-w-6xl mx-auto px-4 pb-10 text-xs text-gray-500">
+    <div class="mt-6 text-center">© <span id="yr"></span> Akash Prajapati — Monthly IT Report Tracker</div>
+  </footer>
+
+<script>
+// ---------------------- Data Loading ----------------------
+const embeddedData = [
+  {
+    month: "August 2025",
+    items: [
+      {
+        category: "Asset Management",
+        title: "Retagged unmanaged assets & Snipe-IT rollout",
+        details: "Keyboard/Mouse tagging completed. All assets recorded with owners & locations.",
+        impact: "Improved accountability & inventory visibility",
+        costSavedINR: 0
+      },
+      {
+        category: "Network & Security",
+        title: "Optimized Sophos policies; blocked non-business sites",
+        details: "Refined FW rules; started category-based blocks to boost security & productivity.",
+        impact: "Reduced risk and distractions",
+        costSavedINR: 0
+      },
+      {
+        category: "Connectivity",
+        title: "Resolved VPN issues + Tata leased line speed",
+        details: "Coordinated with Sophos & Tata; escalated tickets until bandwidth stabilized.",
+        impact: "Reliable remote access & faster internet",
+        costSavedINR: 0
+      },
+      {
+        category: "Finance & ISP",
+        title: "Handled Airtel/Tata/Ishan billing & ISP downtimes",
+        details: "Tracked monthly/quarterly payments; raised & followed-up outages to resolution.",
+        impact: "Avoided late fees & reduced downtime",
+        costSavedINR: 0
+      },
+      {
+        category: "IT Support",
+        title: "Resolved employee IT complaints",
+        details: "Quick TAT on tickets and walk-ins; minimized user downtime.",
+        impact: "Higher user satisfaction",
+        costSavedINR: 0
+      },
+      {
+        category: "Monitoring & SIEM",
+        title: "Evaluated Prometheus/Zabbix; finalized Wazuh + Slack alerts",
+        details: "Prometheus heavy to maintain; Zabbix tested; Implemented Wazuh with custom rules & Slack.",
+        impact: "Centralized alerting with lower upkeep",
+        costSavedINR: 0
+      },
+      {
+        category: "Vendor Management",
+        title: "Coordinated demos: AV/DLP & Patch Management",
+        details: "Evaluated multiple vendors; compared features and TCO.",
+        impact: "Better vendor choices",
+        costSavedINR: 0
+      },
+      {
+        category: "Repair & Refurbish",
+        title: "In-house repair of headphones, keyboards & mice",
+        details: "Opened & fixed minor issues to extend hardware life.",
+        impact: "Reduced replacement purchases",
+        costSavedINR: 3500
+      },
+      {
+        category: "Warranty Management",
+        title: "Laptop warranty coordination (repair/replace FOC)",
+        details: "Coordinated with OEMs for in-warranty laptops; ensured free repairs/replacements.",
+        impact: "Direct cost savings on parts & service",
+        costSavedINR: 12000
+      }
+    ]
+  },
+  {
+    month: "September 2025",
+    items: [
+      {
+        category: "Automation",
+        title: "Backup script & log cleanup",
+        details: "Automated DB backups and periodic log rotation.",
+        impact: "Saved ~12 hrs/month manual work",
+        costSavedINR: 0
+      }
+    ]
+  }
+];
+
+let DATA = [];
+
+async function tryLoadExternalJSON() {
+  try {
+    const res = await fetch('reports.json?cache=' + Date.now());
+    if (!res.ok) throw new Error('no external');
+    const json = await res.json();
+    // Normalize potential old schema
+    return json.map(m => ({
+      month: m.month || m.Month || 'Unknown',
+      items: (m.items || m.tasks || []).map(t => typeof t === 'string' ? ({category: 'General', title: t, details: '', impact: '', costSavedINR: 0}) : ({
+        category: t.category || 'General',
+        title: t.title || t.task || '',
+        details: t.details || t.desc || '',
+        impact: t.impact || '',
+        costSavedINR: Number(t.costSavedINR || 0)
+      }))
+    }));
+  } catch (e) {
+    return null;
+  }
+}
+
+function sortByMonthDesc(arr){
+  // Keep as string order but try parse by Date if possible
+  const order = {
+    'January':1,'February':2,'March':3,'April':4,'May':5,'June':6,
+    'July':7,'August':8,'September':9,'October':10,'November':11,'December':12
+  };
+  return arr.slice().sort((a,b)=>{
+    const [ma, ya] = a.month.split(' ');
+    const [mb, yb] = b.month.split(' ');
+    const da = (parseInt(yb)-parseInt(ya));
+    if (da!==0) return da; // desc by year
+    return (order[mb]||0) - (order[ma]||0); // desc by month
+  });
+}
+
+// ---------------------- Rendering ----------------------
+const elReports = document.getElementById('reports');
+const elMonth = document.getElementById('monthSelect');
+const elSearch = document.getElementById('searchInput');
+const statMonths = document.getElementById('statMonths');
+const statTasks = document.getElementById('statTasks');
+const statCats = document.getElementById('statCats');
+const statCost = document.getElementById('statCost');
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+function setStats(filtered){
+  const months = new Set(filtered.map(m=>m.month));
+  const items = filtered.flatMap(m=>m.items);
+  const cats = new Set(items.map(i=>i.category));
+  const cost = items.reduce((s,i)=> s + (Number(i.costSavedINR)||0), 0);
+  statMonths.textContent = months.size;
+  statTasks.textContent = items.length;
+  statCats.textContent = cats.size;
+  statCost.textContent = cost.toLocaleString('en-IN');
+}
+
+function render(filtered){
+  elReports.innerHTML = '';
+  filtered.forEach(m => {
+    const card = document.createElement('section');
+    card.className = 'print-card glass rounded-2xl p-4 space-y-3 lg:col-span-1';
+
+    const head = document.createElement('div');
+    head.className = 'flex items-center gap-3';
+    head.innerHTML = `
+      <div class="rounded-xl p-2 bg-white/10">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 11h10v2H7zM5 4h14v2H5zM5 18h14v2H5z"/></svg>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold">${m.month}</h3>
+        <p class="text-xs text-gray-400">${m.items.length} items</p>
+      </div>
+    `;
+    card.appendChild(head);
+
+    const list = document.createElement('div');
+    list.className = 'space-y-3';
+
+    m.items.forEach(i => {
+      const row = document.createElement('div');
+      row.className = 'rounded-xl border border-white/10 p-3';
+      row.innerHTML = `
+        <div class="flex items-start gap-2">
+          <span class="shrink-0 inline-flex items-center text-[10px] px-2 py-1 rounded-full border border-white/15 bg-white/5">${i.category}</span>
+          <div class="flex-1">
+            <div class="font-medium">${i.title}</div>
+            ${i.details ? `<div class="text-sm text-gray-300 mt-0.5">${i.details}</div>` : ''}
+            ${i.impact ? `<div class="text-xs text-emerald-300/90 mt-1">Impact: ${i.impact}</div>` : ''}
+            ${Number(i.costSavedINR) ? `<div class="text-xs text-amber-300 mt-1">Cost Saved: ₹${Number(i.costSavedINR).toLocaleString('en-IN')}</div>` : ''}
+          </div>
+        </div>`;
+      list.appendChild(row);
+    });
+
+    card.appendChild(list);
+    elReports.appendChild(card);
+  });
+
+  setStats(filtered);
+}
+
+function applyFilters(){
+  const month = elMonth.value;
+  const q = elSearch.value.trim().toLowerCase();
+  let arr = [...DATA];
+  if (month !== '__all') arr = arr.filter(m => m.month === month);
+  if (q) {
+    arr = arr.map(m => ({
+      ...m,
+      items: m.items.filter(i =>
+        (i.category||'').toLowerCase().includes(q) ||
+        (i.title||'').toLowerCase().includes(q) ||
+        (i.details||'').toLowerCase().includes(q) ||
+        (i.impact||'').toLowerCase().includes(q)
+      )
+    })).filter(m => m.items.length);
+  }
+  render(arr);
+}
+
+function populateMonths(){
+  elMonth.innerHTML = '<option value="__all">All Months</option>' +
+    DATA.map(m=>m.month).map(m=>`<option>${m}</option>`).join('');
+  const last = localStorage.getItem('selectedMonth');
+  if (last && [...elMonth.options].some(o=>o.value===last)) elMonth.value = last;
+}
+
+elMonth.addEventListener('change', ()=>{
+  localStorage.setItem('selectedMonth', elMonth.value);
+  applyFilters();
+});
+
+elSearch.addEventListener('input', ()=>{
+  applyFilters();
+});
+
+// Print button prints the whole page (selected filters already applied)
+ document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
+
+// ---------------------- JSON Editor ----------------------
+const modal = document.getElementById('jsonModal');
+const jsonArea = document.getElementById('jsonArea');
+function openModal(){ modal.classList.remove('hidden'); modal.classList.add('flex'); }
+function closeModal(){ modal.classList.add('hidden'); modal.classList.remove('flex'); }
+modal.querySelectorAll('[data-close]').forEach(b=> b.addEventListener('click', closeModal));
+
+document.getElementById('btnEditJSON').addEventListener('click', ()=>{
+  jsonArea.value = JSON.stringify(DATA, null, 2);
+  openModal();
+});
+
+document.getElementById('btnCopyJSON').addEventListener('click', async ()=>{
+  try { await navigator.clipboard.writeText(jsonArea.value); alert('Copied to clipboard!'); } catch {}
+});
+
+document.getElementById('btnDownloadJSON').addEventListener('click', ()=>{
+  let dataStr = jsonArea.value;
+  try { JSON.parse(dataStr); } catch(e){ alert('JSON invalid: ' + e.message); return; }
+  const blob = new Blob([dataStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'reports.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ---------------------- Init ----------------------
+(async function init(){
+  const external = await tryLoadExternalJSON();
+  DATA = sortByMonthDesc(external || embeddedData);
+  populateMonths();
+  applyFilters();
+})();
+</script>
+</body>
+</html>
