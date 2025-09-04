@@ -3,11 +3,20 @@
     "month": "August 2025",
     "items": [
       {
+        "category": "Network Issue",
+        "title": "VPN connectivity resolved",
+        "details": "User was unable to connect from remote",
+        "impact": "Restored business continuity",
+        "costSavedINR": 0,
+        "user": "Rahul Sharma"
+      },
+      {
         "category": "Warranty Management",
-        "title": "Laptop warranty coordination (FOC)",
-        "details": "OEM se free repair/replace",
-        "impact": "Direct cost savings",
-        "costSavedINR": 12000
+        "title": "Laptop replaced under warranty",
+        "details": "Coordinated with OEM for free replacement",
+        "impact": "Saved repair/replacement cost",
+        "costSavedINR": 12000,
+        "user": "Priya Patel"
       }
     ]
   }
